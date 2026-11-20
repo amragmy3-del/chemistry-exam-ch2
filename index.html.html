@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>الامتحان الشامل - الباب الثاني (التحليل الكيميائي) | د. عمرو كامل</title>
+  <!-- خط القاهرة العربي الاحترافي -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <!-- مكتبة Tailwind CSS للتصميم المتجاوب -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * {
+      font-family: 'Cairo', sans-serif;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      overflow-x: hidden;
+    }
+
+    /* تنسيق الصيغ الكيميائية لتظهر من اليسار لليمين بدقة */
+    .chem {
+      direction: ltr;
+      unicode-bidi: isolate;
+      display: inline-block;
+      font-weight: 700;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 0 2px;
+    }
+
+    .chem sub, .chem sup {
+      font-size: 0.72em;
+      line-height: 0;
+    }
+
+    /* تأثيرات بطاقات الاختيارات */
+    .option-label {
+      transition: all 0.2s ease;
+    }
+
+    .option-label:hover:not(.locked) {
+      transform: translateY(-1px);
+      border-color: #2563eb;
+      background-color: #eff6ff;
+    }
+
+    .option-selected {
+      border-color: #2563eb !important;
+      background-color: #dbeafe !important;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+    }
+
+    .option-correct {
+      border-color: #16a34a !important;
+      background-color: #dcfce7 !important;
+      color: #14532d !important;
+      font-weight: 700;
+    }
+
+    .option-wrong {
+      border-color: #dc2626 !important;
+      background-color: #fee2e2 !important;
+      color: #7f1d1d !important;
+    }
+
+    /* نبض المؤقت في آخر 10 دقائق */
+    @keyframes pulseWarning {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+    }
+
+    .timer-danger {
+      animation: pulseWarning 1s infinite;
+      background-color: #dc2626 !important;
+      color: #ffffff !important;
+    }
+
+    /* شريط تمرير أنيق */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #e2e8f0;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #64748b;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- الشريط العلوي الثابت -->
+  <header class="sticky top-0 z-40 bg-gradient-to-l from-slate-900 via-blue-950 to-slate-900 text-white shadow-lg border-b border-blue-800/60">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <!-- شعار وهوية المدرس -->
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 font-black text-xl shadow-md shrink-0">
+          🧪
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white leading-tight">
+            الامتحان الشامل - الباب الثاني (التحليل الكيميائي)
+          </h1>
+          <p class="text-xs sm:text-sm text-amber-300 font-bold">
+            إعداد: د. عمرو كامل | Dr. Amr Kamel
+          </p>
+        </div>
+      </div>
+
+      <!-- أدوات الامتحان أثناء الحل (تظهر عند بدء الامتحان) -->
+      <div id="examHeaderControls" class="hidden flex items-center gap-2 sm:gap-3">
+        <span id="activeModelBadge" class="hidden md:inline-block bg-blue-800/80 border border-blue-500/40 text-blue-100 text-xs font-bold px-3 py-1.5 rounded-xl">
+          النموذج الأول
+        </span>
+        <div id="timerBox" class="flex items-center gap-2 bg-slate-800 border border-slate-600 px-3.5 py-1.5 rounded-xl font-mono text-base sm:text-lg font-black text-amber-400 shadow-inner">
+          <span>⏱️</span>
+          <span id="timerDisplay">80:00</span>
+        </div>
+        <button id="headerSubmitBtn" type="button" onclick="confirmSubmitModal()" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs sm:text-sm font-extrabold px-4 py-2 rounded-xl shadow transition cursor-pointer">
+          تسليم الامتحان
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- المحتوى الرئيسي -->
+  <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-6 sm:py-8">
+
+    <!-- 1. شاشة البداية واختيار النموذج -->
+    <section id="welcomeScreen" class="space-y-6">
+      <!-- بطاقة الترحيب -->
+      <div class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+        <div class="bg-gradient-to-l from-blue-900 via-blue-800 to-indigo-900 p-6 sm:p-8 text-white relative">
+          <div class="max-w-3xl">
+            <span class="inline-block bg-amber-400/20 border border-amber-400/40 text-amber-300 text-xs sm:text-sm font-bold px-3.5 py-1 rounded-full mb-3">
+              كيمياء الثانوية العامة • معاً نحو التفوق والنجاح
+            </span>
+            <h2 class="text-2xl sm:text-3xl font-black mb-2 leading-snug">
+              أنت قادر على تحقيق أعلى الدرجات!
+            </h2>
+            <p class="text-blue-100 text-sm sm:text-base leading-relaxed">
+              منصة الاختبارات الإلكترونية التفاعلية للباب الثاني (التحليل الكيميائي) — إعداد <strong class="text-amber-300">د. عمرو كامل</strong>. اختر النموذج المطلوب وابدأ التحدي الآن.
+            </p>
+          </div>
+        </div>
+
+        <div class="p-6 sm:p-8 space-y-6">
+          <!-- تعليمات الامتحان -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-xl font-bold shrink-0">⏳</div>
+              <div>
+                <p class="text-xs text-slate-500 font-semibold">مدة الامتحان</p>
+                <p class="text-sm font-extrabold text-slate-800">80 دقيقة لكل نموذج</p>
+              </div>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl font-bold shrink-0">☑️</div>
+              <div>
+                <p class="text-xs text-slate-500 font-semibold">أسئلة الاختيار من متعدد</p>
+                <p class="text-sm font-extrabold text-slate-800">1 درجة لكل سؤال</p>
+              </div>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl font-bold shrink-0">✍️</div>
+              <div>
+                <p class="text-xs text-slate-500 font-semibold">الأسئلة المقالية والمسائل</p>
+                <p class="text-sm font-extrabold text-slate-800">3 درجات لكل مسألة</p>
+              </div>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-xl font-bold shrink-0">🔄</div>
+              <div>
+                <p class="text-xs text-slate-500 font-semibold">المحاولات والتصحيح</p>
+                <p class="text-sm font-extrabold text-slate-800">فوري + إعادة مفتوحة</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- بيانات الطالب -->
+          <div class="bg-blue-50/60 border border-blue-200/80 rounded-2xl p-5">
+            <h3 class="text-base font-extrabold text-blue-950 mb-3 flex items-center gap-2">
+              <span>👨‍🎓</span>
+              <span>بيانات الطالب قبل بدء الامتحان</span>
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="studentName" class="block text-xs font-bold text-slate-700 mb-1.5">اسم الطالب ثلاثي *</label>
+                <input type="text" id="studentName" placeholder="اكتب اسمك هنا..." class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600" />
+              </div>
+              <div>
+                <label for="studentGroup" class="block text-xs font-bold text-slate-700 mb-1.5">المجموعة / السنتر (اختياري)</label>
+                <input type="text" id="studentGroup" placeholder="مثال: مجموعة السبت والثلاثاء" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600" />
+              </div>
+            </div>
+            <p id="nameErrorMsg" class="hidden text-xs font-bold text-red-600 mt-2">⚠️ من فضلك اكتب اسمك أولاً قبل بدء الامتحان.</p>
+          </div>
+
+          <!-- اختيار النموذج -->
+          <div>
+            <h3 class="text-base font-extrabold text-slate-800 mb-3">اختر نموذج الامتحان:</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- النموذج الأول -->
+              <div class="border-2 border-blue-200 hover:border-blue-600 bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="bg-blue-100 text-blue-800 text-xs font-extrabold px-3 py-1 rounded-full">النموذج الأول (1)</span>
+                    <span class="text-xs font-bold text-slate-500">41 درجة إجمالاً</span>
+                  </div>
+                  <h4 class="text-lg font-black text-slate-900 mb-1">الامتحان الشامل - نموذج (1)</h4>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-4">
+                    يشمل <strong>20 سؤال اختيار من متعدد</strong> (20 درجة) + <strong>7 مسائل وأسئلة مقالية</strong> شاملة للمعايرة والتطاير والترسيب والكشف عن الشقوق (21 درجة).
+                  </p>
+                </div>
+                <button type="button" onclick="startExam(1)" class="w-full bg-blue-700 hover:bg-blue-800 active:scale-[0.99] text-white font-extrabold py-3 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 cursor-pointer">
+                  <span>ابدأ النموذج الأول الآن</span>
+                  <span>⬅️</span>
+                </button>
+              </div>
+
+              <!-- النموذج الثاني -->
+              <div class="border-2 border-emerald-200 hover:border-emerald-600 bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="bg-emerald-100 text-emerald-800 text-xs font-extrabold px-3 py-1 rounded-full">النموذج الثاني (2)</span>
+                    <span class="text-xs font-bold text-slate-500">44 درجة إجمالاً</span>
+                  </div>
+                  <h4 class="text-lg font-black text-slate-900 mb-1">الامتحان الشامل - نموذج (2)</h4>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-4">
+                    يشمل <strong>20 سؤال اختيار من متعدد</strong> (20 درجة) + <strong>8 فقرات ومسائل مقالية</strong> في التعرف على الأملاح والمعادلات ومسائل المعايرة والترسيب (24 درجة).
+                  </p>
+                </div>
+                <button type="button" onclick="startExam(2)" class="w-full bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white font-extrabold py-3 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 cursor-pointer">
+                  <span>ابدأ النموذج الثاني الآن</span>
+                  <span>⬅️</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. شاشة الامتحان والمراجعة بعد التسليم -->
+    <section id="examScreen" class="hidden space-y-6">
+
+      <!-- بطاقة النتيجة النهائية (تظهر فقط بعد تسليم الامتحان) -->
+      <div id="resultSummaryCard" class="hidden bg-white rounded-3xl shadow-xl border-2 border-emerald-500 overflow-hidden">
+        <div class="bg-gradient-to-l from-slate-900 via-blue-950 to-slate-900 p-6 text-white flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <span class="inline-block bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-extrabold px-3 py-1 rounded-full mb-2">
+              تم تصحيح الامتحان تلقائياً • الإجابات مغلقة للمراجعة فقط
+            </span>
+            <h2 id="resultStudentTitle" class="text-xl sm:text-2xl font-black text-white">نتيجة الطالب</h2>
+            <p id="resultModelSubtitle" class="text-xs sm:text-sm text-slate-300 mt-0.5"></p>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="bg-white/10 backdrop-blur border border-white/20 rounded-2xl px-5 py-3 text-center">
+              <p class="text-xs text-amber-300 font-bold">الدرجة النهائية</p>
+              <p id="totalScoreDisplay" class="text-2xl sm:text-3xl font-black text-white mt-0.5">0 / 0</p>
+            </div>
+            <div class="bg-white/10 backdrop-blur border border-white/20 rounded-2xl px-5 py-3 text-center">
+              <p class="text-xs text-emerald-300 font-bold">النسبة المئوية</p>
+              <p id="percentageDisplay" class="text-2xl sm:text-3xl font-black text-emerald-400 mt-0.5">0%</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-5 sm:p-6 bg-slate-50 grid grid-cols-1 sm:grid-cols-3 gap-3 border-b border-slate-200">
+          <div class="bg-white rounded-2xl p-3.5 border border-slate-200 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-600">درجة الاختيار من متعدد:</span>
+            <span id="mcqScoreBadge" class="text-sm font-black text-blue-700">0 / 20</span>
+          </div>
+          <div class="bg-white rounded-2xl p-3.5 border border-slate-200 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-600">درجة الأسئلة المقالية:</span>
+            <span id="essayScoreBadge" class="text-sm font-black text-amber-700">0 / 21</span>
+          </div>
+          <div class="bg-white rounded-2xl p-3.5 border border-slate-200 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-600">التقدير العام:</span>
+            <span id="gradeTextBadge" class="text-sm font-black text-emerald-700">ممتاز</span>
+          </div>
+        </div>
+
+        <!-- أزرار إعادة الامتحان أو التبديل للنموذج الآخر -->
+        <div class="p-5 bg-white flex flex-wrap items-center justify-between gap-3">
+          <p class="text-xs text-slate-600 font-semibold">
+            🔒 تم قفل الإجابات لمنع التعديل. يمكنك مراجعة الحل النموذجي بالأسفل أو إعادة المحاولة في أي وقت.
+          </p>
+          <div class="flex flex-wrap items-center gap-2.5">
+            <button type="button" onclick="retakeSameModel()" class="bg-blue-700 hover:bg-blue-800 text-white text-xs sm:text-sm font-extrabold px-4 py-2.5 rounded-xl shadow transition cursor-pointer">
+              🔄 إعادة نفس النموذج
+            </button>
+            <button type="button" onclick="returnToHome()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs sm:text-sm font-extrabold px-4 py-2.5 rounded-xl shadow transition cursor-pointer">
+              🏠 اختيار نموذج آخر
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- شريط معلومات سريع أثناء الحل -->
+      <div id="liveProgressBar" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-700">
+          <span>👤 الطالب:</span>
+          <span id="liveStudentName" class="text-blue-800 font-extrabold"></span>
+          <span id="liveStudentGroup" class="text-slate-500"></span>
+        </div>
+        <div class="flex items-center gap-3 text-xs font-bold">
+          <span class="bg-blue-50 text-blue-800 px-3 py-1 rounded-lg border border-blue-200">
+            تم حل: <strong id="answeredCounter">0</strong> سؤال
+          </span>
+          <button type="button" onclick="returnToHome()" class="text-slate-500 hover:text-red-600 underline cursor-pointer">
+            خروج للقائمة الرئيسية
+          </button>
+        </div>
+      </div>
+
+      <!-- قسم أولاً: الاختيار من متعدد -->
+      <div class="space-y-4">
+        <div class="bg-blue-900 text-white px-5 py-3.5 rounded-2xl shadow flex items-center justify-between">
+          <h3 class="text-base sm:text-lg font-black">أولاً: اختر الإجابة الصحيحة فيما يلي</h3>
+          <span class="bg-blue-800 border border-blue-600 text-amber-300 text-xs font-extrabold px-3 py-1 rounded-full">
+            كل سؤال بدرجة واحدة (1 درجة)
+          </span>
+        </div>
+        <div id="mcqContainer" class="space-y-4"></div>
+      </div>
+
+      <!-- قسم ثانياً: الأسئلة المقالية -->
+      <div class="space-y-4 pt-2">
+        <div class="bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow flex items-center justify-between">
+          <h3 class="text-base sm:text-lg font-black">ثانياً: الأسئلة المقالية والمسائل الحسابية</h3>
+          <span class="bg-amber-500 text-slate-950 text-xs font-black px-3 py-1 rounded-full">
+            كل مسألة بـ 3 درجات
+          </span>
+        </div>
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 text-xs sm:text-sm text-amber-900 font-semibold">
+          💡 <strong>ملاحظة للتصحيح التلقائي:</strong> اكتب خطوات الحل والناتج النهائي (أو اسم الملح وصيغته الكيميائية) بوضوح في الخانة المخصصة لكل مسألة ليتم رصد الدرجة (3 درجات) ومقارنة حلك بالإجابة النموذجية عند التسليم.
+        </div>
+        <div id="essayContainer" class="space-y-4"></div>
+      </div>
+
+      <!-- زر تسليم الامتحان أسفل الصفحة -->
+      <div id="bottomSubmitArea" class="bg-white rounded-3xl p-6 shadow-md border border-slate-200 text-center space-y-3">
+        <p class="text-sm font-bold text-slate-700">
+          تأكد من مراجعة إجاباتك جيداً قبل الضغط على زر التسليم، حيث لن يُسمح بتعديل الإجابات بعد التسليم.
+        </p>
+        <button type="button" onclick="confirmSubmitModal()" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-base font-black px-8 py-3.5 rounded-2xl shadow-lg transition cursor-pointer">
+          ✅ تسليم الامتحان وعرض النتيجة والإجابات النموذجية
+        </button>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- نافذة تأكيد التسليم المخصصة (بديل alert/confirm) -->
+  <div id="confirmModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-center">
+      <div class="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-3xl mx-auto">
+        ⚠️
+      </div>
+      <h3 class="text-xl font-black text-slate-900">هل أنت متأكد من تسليم الامتحان؟</h3>
+      <p id="modalUnansweredWarning" class="text-sm text-slate-600 font-semibold leading-relaxed">
+        بعد تسليم الامتحان سيتم تصحيحه فوراً ولن تتمكن من تعديل إجاباتك في هذه المحاولة.
+      </p>
+      <div class="flex items-center justify-center gap-3 pt-2">
+        <button type="button" onclick="submitExam(false)" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2.5 px-4 rounded-xl shadow transition cursor-pointer">
+          نعم، سلم الامتحان
+        </button>
+        <button type="button" onclick="closeConfirmModal()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold py-2.5 px-4 rounded-xl transition cursor-pointer">
+          العودة للمراجعة
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- تذييل الصفحة -->
+  <footer class="bg-slate-900 text-slate-400 text-center py-4 px-4 text-xs border-t border-slate-800 mt-10">
+    <p class="font-bold text-slate-300">الامتحان الشامل في الكيمياء (الباب الثاني: التحليل الكيميائي) — إعداد د. عمرو كامل</p>
+    <p class="mt-1">جميع الحقوق محفوظة • مصمم للعمل بكفاءة على الهواتف الذكية وأجهزة الكمبيوتر</p>
+  </footer>
+
+  <script>
+    // =========================================================================
+    // قاعدة بيانات الامتحانين (النموذج الأول والنموذج الثاني) بالإجابات النموذجية
+    // =========================================================================
+    const EXAMS_DATA = {
+      1: {
+        title: "النموذج الأول (1)",
+        subtitle: "الامتحان الشامل - الباب الثاني (التحليل الكيميائي)",
+        durationMinutes: 80,
+        mcqs: [
+          {
+            q: "عند إضافة حمض الهيدروكلوريك إلى الملح <span class='chem'>X</span> تصاعد غاز ذو رائحة كريهة، وعند إضافة محلول نترات الفضة إلى محلول الملح <span class='chem'>X</span> تكون راسب أسود، فإن الملح <span class='chem'>X</span> هو ................",
+            options: ["كبريتيت الصوديوم", "كبريتيد الصوديوم", "كربونات الصوديوم", "بيكربونات الصوديوم"],
+            correct: 1
+          },
+          {
+            q: "جميع العبارات التالية صحيحة عن حمض الهيدروكلوريك المخفف ما عدا ................",
+            options: [
+              "لا يصلح للكشف عن أملاح حمض الكبريتيك لأنه أقل ثباتًا منه",
+              "لا يصلح للكشف عن أملاح حمض الفوسفوريك لأنه أقل ثباتًا منه",
+              "يصلح للتمييز بين أملاح الكربونات والبيكربونات",
+              "يصلح للتمييز بين أملاح الكبريتيد والكبريتيت"
+            ],
+            correct: 2
+          },
+          {
+            q: "عند إجراء كشف اللهب على ملح (<span class='chem'>X</span>) يتلون اللهب باللون الأحمر الطوبي، وعند إضافة حمض الكبريتيك المركز إلى الملح (<span class='chem'>X</span>) يتصاعد غاز عديم اللون فإن الملح (<span class='chem'>X</span>) يحتمل أن يكون ................",
+            options: [
+              "<span class='chem'>Ca(NO<sub>3</sub>)<sub>2</sub></span>",
+              "<span class='chem'>CaCl<sub>2</sub></span>",
+              "<span class='chem'>NaCl</span>",
+              "<span class='chem'>KNO<sub>3</sub></span>"
+            ],
+            correct: 1
+          },
+          {
+            q: "ادرس التفاعل التالي: <span class='chem'>X<sub>(s)</sub> + 2HCl<sub>(aq)</sub> &rarr; 2NaCl<sub>(aq)</sub> + H<sub>2</sub>O<sub>(l)</sub> + Y<sub>(g)</sub> + Z<sub>(s)</sub></span><br>أي مما يلي صحيح؟",
+            options: [
+              "الملح <span class='chem'>X</span> هو كبريتيد الصوديوم",
+              "الملح <span class='chem'>X</span> هو كبريتيت الصوديوم",
+              "الغاز <span class='chem'>Y</span> يخضر ورقة مبللة بمحلول <span class='chem'>K<sub>2</sub>Cr<sub>2</sub>O<sub>7</sub></span> المحمضة",
+              "الغاز <span class='chem'>Y</span> يسود ورقة مبللة بمحلول أسيتات الرصاص <span class='chem'>II</span>"
+            ],
+            correct: 2
+          },
+          {
+            q: "أي من الأملاح التالية يمكن الكشف عن شقيه باستخدام حمض الهيدروكلوريك في الظروف المناسبة؟",
+            options: ["نترات الفضة", "نيتريت الفضة", "كبريتات الماغنيسيوم", "فوسفات الكالسيوم"],
+            correct: 1
+          },
+          {
+            q: "عند إضافة حمض الكبريتيك المركز إلى ملح صلب <span class='chem'>A</span> يتصاعد غاز <span class='chem'>B</span> ويتكون راسب <span class='chem'>C</span>، أي مما يلي يمكن أن يكون <span class='chem'>A</span> و <span class='chem'>B</span>؟",
+            options: [
+              "<span class='chem'>A: Ca(NO<sub>3</sub>)<sub>2</sub></span> ، <span class='chem'>B: NO<sub>2</sub></span>",
+              "<span class='chem'>A: PbSO<sub>4</sub></span> ، <span class='chem'>B: SO<sub>2</sub></span>",
+              "<span class='chem'>A: BaCO<sub>3</sub></span> ، <span class='chem'>B: CO<sub>2</sub></span>",
+              "<span class='chem'>A: NaCl</span> ، <span class='chem'>B: HCl</span>"
+            ],
+            correct: 0
+          },
+          {
+            q: "يمكن التمييز بين محلولي نترات الكالسيوم وأسيتات الرصاص <span class='chem'>II</span> باستخدام محلول ................",
+            options: ["كلوريد الصوديوم", "بيكربونات الصوديوم", "نترات البوتاسيوم", "كبريتات الصوديوم"],
+            correct: 0
+          },
+          {
+            q: "أي من أزواج الأنيونات الآتية لا يمكن فصلها عن بعضها من محلول يحتوي على خليط منهما باستخدام محلول نترات الرصاص <span class='chem'>II</span>؟",
+            options: [
+              "<span class='chem'>S<sup>2-</sup> , NO<sub>3</sub><sup>-</sup></span>",
+              "<span class='chem'>SO<sub>4</sub><sup>2-</sup> , NO<sub>3</sub><sup>-</sup></span>",
+              "<span class='chem'>Cl<sup>-</sup> , NO<sub>3</sub><sup>-</sup></span>",
+              "<span class='chem'>Cl<sup>-</sup> , CO<sub>3</sub><sup>2-</sup></span>"
+            ],
+            correct: 3
+          },
+          {
+            q: "أي التفاعلات التالية يعطي خليطًا من الغازات في الظروف المناسبة لكل تفاعل؟",
+            options: [
+              "تفاعل ملح كلوريد الصوديوم مع حمض الكبريتيك المركز",
+              "تفاعل ملح بروميد الصوديوم مع حمض الكبريتيك المركز",
+              "تفاعل ملح كربونات البوتاسيوم مع حمض الهيدروكلوريك المخفف",
+              "تفاعل ملح كبريتيد الصوديوم مع حمض الهيدروكلوريك المخفف"
+            ],
+            correct: 1
+          },
+          {
+            q: "ادرس التفاعل التالي: <span class='chem'>A<sub>(aq)</sub> + B<sub>(aq)</sub> &rarr; C<sub>(s)</sub> + D<sub>(aq)</sub></span><br>إذا علمت أن <span class='chem'>C</span> راسب أبيض، و <span class='chem'>D</span> يستطيع أن يكون راسب أبيض مع محلولي كربونات الصوديوم ونترات الفضة كل على حدة، فإن <span class='chem'>A</span> و <span class='chem'>B</span> قد يكونان ................",
+            options: [
+              "كبريتات الماغنسيوم وكلوريد الباريوم",
+              "يوديد البوتاسيوم ونترات الفضة",
+              "فوسفات البوتاسيوم ونترات الفضة",
+              "كبريتات البوتاسيوم وكلوريد الباريوم"
+            ],
+            correct: 0
+          },
+          {
+            q: "يتفاعل المحلول (<span class='chem'>X</span>) مع المحلولين التاليين كل على حدة مكونًا راسبين لهما نفس اللون: مع محلول نترات الفضة، ومع محلول كبريتات الصوديوم. فإن المحلول (<span class='chem'>X</span>) يحتمل أن يكون ................",
+            options: ["كلوريد الباريوم", "بروميد البوتاسيوم", "كلوريد الماغنسيوم", "كلوريد الألومنيوم"],
+            correct: 0
+          },
+          {
+            q: "تم إضافة محلول كبريتات الحديد <span class='chem'>II</span> المحضر حديثًا إلى <span class='chem'>2 mol</span> من محلول نترات الصوديوم، ثم تم إضافة قطرات من حمض الكبريتيك المركز ولم تتكون حلقة بنية، فإن السبب المحتمل لذلك هو ................",
+            options: [
+              "استخدام <span class='chem'>6 mol</span> من محلول كبريتات الحديد <span class='chem'>II</span> المحضر حديثًا",
+              "استخدام <span class='chem'>5 mol</span> من محلول كبريتات الحديد <span class='chem'>II</span> المحضر حديثًا",
+              "إضافة قطرات حمض الكبريتيك المركز على السطح الداخلي لأنبوبة الاختبار بحرص",
+              "عدم استخدام اللهب وعدم رج محتويات الأنبوبة أثناء خلط محاليل التفاعل"
+            ],
+            correct: 1
+          },
+          {
+            q: "محلول ملح (<span class='chem'>X</span>) عند إضافة محلول كبريتات الصوديوم إليه يتكون راسب أبيض (<span class='chem'>A</span>)، وعند إمرار الغاز (<span class='chem'>B</span>) في محلول (<span class='chem'>X</span>) يتكون راسب أسود (<span class='chem'>C</span>) وحمض (<span class='chem'>D</span>)، أي مما يلي صحيح؟",
+            options: [
+              "(<span class='chem'>A</span>) فوسفات الفضة، (<span class='chem'>B</span>) غاز كبريتيد الهيدروجين",
+              "(<span class='chem'>A</span>) كبريتات الرصاص <span class='chem'>II</span>، (<span class='chem'>B</span>) غاز كبريتيد الهيدروجين",
+              "(<span class='chem'>C</span>) كبريتات الكالسيوم، (<span class='chem'>D</span>) حمض الأسيتيك",
+              "(<span class='chem'>C</span>) كلوريد الفضة، (<span class='chem'>B</span>) غاز كبريتيد الهيدروجين"
+            ],
+            correct: 1
+          },
+          {
+            q: "يمكن التمييز بين محلول هيدروكسيد الكالسيوم ومحلول هيدروكسيد البوتاسيوم عن طريق:",
+            options: [
+              "إمرار كمية وفيرة من ثاني أكسيد الكربون",
+              "إمرار كمية محدودة من ثاني أكسيد الكربون",
+              "إمرار كمية وفيرة من أول أكسيد الكربون",
+              "إمرار كمية محدودة من أول أكسيد الكربون"
+            ],
+            correct: 1
+          },
+          {
+            q: "أي المركبات التالية يمكن استخدامها لتقليل أثر الرائحة النفاذة لغاز كلوريد الهيدروجين؟",
+            options: [
+              "<span class='chem'>SO<sub>2</sub></span>",
+              "<span class='chem'>NH<sub>3</sub></span>",
+              "<span class='chem'>H<sub>2</sub>S</span>",
+              "<span class='chem'>CO<sub>2</sub></span>"
+            ],
+            correct: 1
+          },
+          {
+            q: "للحصول على أبخرة اليود من ملح يوديد البوتاسيوم نجري الخطوات الآتية:",
+            options: [
+              "إحلال مزدوج ثم اختزال فقط",
+              "إحلال بسيط ثم أكسدة واختزال",
+              "إحلال مزدوج ثم أكسدة واختزال",
+              "إحلال مزدوج ثم أكسدة فقط"
+            ],
+            correct: 2
+          },
+          {
+            q: "عدد مولات هيدروكسيد الصوديوم اللازمة للتفاعل مع مول من محلول كبريتات الألومنيوم للحصول على محلول رائق يساوي ................",
+            options: ["3", "4", "6", "8"],
+            correct: 3
+          },
+          {
+            q: "أضيف حمض الهيدروكلوريك المخفف إلى برادة الحديد، ثم أضيف إلى الملح الناتج محلول برمنجنات البوتاسيوم المحمضة ثم أضيف بعد ذلك محلول الأمونيا، يتكون في النهاية راسب ................",
+            options: ["أبيض مخضر", "أحمر داكن", "بني محمر", "أبيض"],
+            correct: 2
+          },
+          {
+            q: "للحصول على راسب واحد لونه بني محمر من محلول يحتوي على كاتيوني <span class='chem'>Fe<sup>2+</sup>, Fe<sup>3+</sup></span> يلزم:",
+            options: [
+              "إضافة مادة مختزلة ثم وسط قلوي",
+              "إضافة مادة مؤكسدة محمضة ثم وسط قلوي",
+              "إضافة مادة مختزلة ثم وسط حمضي",
+              "إضافة مادة مؤكسدة محمضة ثم وسط حمضي"
+            ],
+            correct: 1
+          },
+          {
+            q: "يستخدم نفس الكاشف للتعرف على شقي ملح ................",
+            options: [
+              "<span class='chem'>FeCl<sub>3</sub></span>",
+              "<span class='chem'>Cu(NO<sub>3</sub>)<sub>2</sub></span>",
+              "<span class='chem'>KI</span>",
+              "<span class='chem'>Hg<sub>2</sub>(NO<sub>2</sub>)<sub>2</sub></span>"
+            ],
+            correct: 2
+          }
+        ],
+        essays: [
+          {
+            q: "أضيف <span class='chem'>20 mL</span> من ماء الجير الرائق تركيزه <span class='chem'>0.1 M</span> إلى <span class='chem'>12 mL</span> من حمض النيتريك تركيزه <span class='chem'>0.5 M</span>، ولإتمام التعادل لزم إضافة <span class='chem'>20 mL</span> من محلول هيدروكسيد الصوديوم، ما تركيز محلول هيدروكسيد الصوديوم؟",
+            placeholder: "اكتب خطوات الحل والناتج النهائي (مثال: تركيز NaOH = 0.1 M)...",
+            keywords: ["0.1", "٠.١"],
+            modelAnswer: `
+              <ul class="list-disc pr-5 space-y-1 text-slate-800">
+                <li>عدد مولات القاعدة <span class="chem">Ca(OH)<sub>2</sub></span> = <span class="chem">0.1 &times; 20 &times; 10<sup>-3</sup> = 0.002 mol</span></li>
+                <li>من المعادلة: <span class="chem">Ca(OH)<sub>2</sub> + 2HNO<sub>3</sub> &rarr; Ca(NO<sub>3</sub>)<sub>2</sub> + 2H<sub>2</sub>O</span> &larr; عدد مولات <span class="chem">HNO<sub>3</sub></span> المتفاعلة = <span class="chem">0.002 &times; 2 = 0.004 mol</span></li>
+                <li>عدد مولات <span class="chem">HNO<sub>3</sub></span> الكلية = <span class="chem">0.5 &times; 12 &times; 10<sup>-3</sup> = 0.006 mol</span></li>
+                <li>عدد مولات <span class="chem">HNO<sub>3</sub></span> المتبقية = <span class="chem">0.006 - 0.004 = 0.002 mol</span></li>
+                <li>عند المعايرة مع <span class="chem">NaOH</span> (<span class="chem">n<sub>a</sub> = 1, n<sub>b</sub> = 1</span>): <span class="chem">M<sub>b</sub> &times; 20 &times; 10<sup>-3</sup> = 0.002 &rArr; <strong>M<sub>b</sub> = 0.1 M</strong></span></li>
+              </ul>
+            `
+          },
+          {
+            q: "عينة كتلتها <span class='chem'>1.4 g</span> من كلوريد الباريوم المتهدرت <span class='chem'>BaCl<sub>2</sub>&middot;xH<sub>2</sub>O</span> تحتوي على <span class='chem'>14.76%</span> من كتلتها ماء تبلر، ما عدد مولات ماء التبلر (<span class='chem'>x</span>) في العينة؟ <span class='chem'>[Ba=137, Cl=35.5, H=1, O=16]</span>",
+            placeholder: "اكتب خطوات حساب عدد مولات ماء التبلر (x)...",
+            keywords: ["2", "٢"],
+            modelAnswer: `
+              <ul class="list-disc pr-5 space-y-1 text-slate-800">
+                <li>كتلة ماء التبلر = <span class="chem">1.4 &times; (14.76 / 100) = 0.2066 g</span></li>
+                <li>كتلة الملح الجاف <span class="chem">BaCl<sub>2</sub></span> = <span class="chem">1.4 - 0.2066 = 1.1934 g</span></li>
+                <li>الكتلة المولية لـ <span class="chem">BaCl<sub>2</sub> = 137 + 71 = 208 g/mol</span>، والكتلة المولية لـ <span class="chem">H<sub>2</sub>O = 18 g/mol</span></li>
+                <li>عدد مولات <span class="chem">BaCl<sub>2</sub> = 1.1934 / 208 &approx; 0.00574 mol</span>، وعدد مولات <span class="chem">H<sub>2</sub>O = 0.2066 / 18 &approx; 0.01148 mol</span></li>
+                <li>إذن: <span class="chem">x = 0.01148 / 0.00574 = <strong>2 mol</strong></span> (الصيغة: <span class="chem">BaCl<sub>2</sub>&middot;2H<sub>2</sub>O</span>)</li>
+              </ul>
+            `
+          },
+          {
+            q: "إذا كانت نسبة هيدروكسيد البوتاسيوم في مخلوط من كلوريد البوتاسيوم وهيدروكسيد البوتاسيوم كتلته <span class='chem'>1 g</span> تساوي <span class='chem'>70%</span>، فما حجم حمض الهيدروكلوريك <span class='chem'>0.2 M</span> اللازم للتعادل مع محلول المخلوط السابق؟ <span class='chem'>[K=39, O=16, H=1]</span>",
+            placeholder: "اكتب خطوات الحل والحجم الناتج بالمليلتر أو اللتر...",
+            keywords: ["62.5", "0.0625", "٦٢.٥"],
+            modelAnswer: `
+              <ul class="list-disc pr-5 space-y-1 text-slate-800">
+                <li>كتلة <span class="chem">KOH</span> في المخلوط = <span class="chem">1 &times; (70 / 100) = 0.7 g</span></li>
+                <li>الكتلة المولية لـ <span class="chem">KOH = 39 + 16 + 1 = 56 g/mol</span></li>
+                <li>عدد مولات <span class="chem">KOH = 0.7 / 56 = 0.0125 mol</span></li>
+                <li>معادلة التعادل: <span class="chem">HCl + KOH &rarr; KCl + H<sub>2</sub>O</span> (<span class="chem">n<sub>a</sub> = 1, n<sub>b</sub> = 1</span>)</li>
+                <li><span class="chem">0.2 &times; V<sub>a</sub> = 0.0125 &rArr; V<sub>a</sub> = 0.0625 L = <strong>62.5 mL</strong></span></li>
+              </ul>
+            `
+          },
+          {
+            q: "أذيب <span class='chem'>5.3 g</span> من كربونات الصوديوم في الماء ثم أكمل المحلول حتى أصبح حجمه <span class='chem'>500 mL</span>، فتعادل <span class='chem'>30 mL</span> من هذا المحلول مع <span class='chem'>15 mL</span> من حمض الهيدروكلوريك، احسب مولارية الحمض؟ <span class='chem'>[Na=23, C=12, O=16]</span>",
+            placeholder: "اكتب خطوات حساب مولارية الحمض (Ma)...",
+            keywords: ["0.4", "٠.٤"],
+            modelAnswer: `
+              <ul class="list-disc pr-5 space-y-1 text-slate-800">
+                <li>الكتلة المولية لـ <span class="chem">Na<sub>2</sub>CO<sub>3</sub> = 2(23) + 12 + 3(16) = 106 g/mol</span></li>
+                <li>تركيز محلول كربونات الصوديوم <span class="chem">M<sub>b</sub> = 5.3 / (106 &times; 0.5) = 0.1 M</span></li>
+                <li>معادلة التعادل: <span class="chem">2HCl + Na<sub>2</sub>CO<sub>3</sub> &rarr; 2NaCl + H<sub>2</sub>O + CO<sub>2</sub></span> (<span class="chem">n<sub>a</sub> = 2, n<sub>b</sub> = 1</span>)</li>
+                <li><span class="chem">(M<sub>a</sub> &times; 15) / 2 = (0.1 &times; 30) / 1 &rArr; <strong>M<sub>a</sub> = 0.4 M</strong></span></li>
+              </ul>
+            `
+          },
+          {
+            q: "أذيب <span class='chem'>6.2375 g</span> من الملح المتهدرت <span class='chem'>CuSO<sub>4</sub>&middot;xH<sub>2</sub>O</span> في الماء ثم أضيف إليه وفرة من محلول كلوريد الباريوم فتكون راسب كتلته <span class='chem'>5.825 g</span>، احسب النسبة المئوية لماء التبلر وما هي قيمة <span class='chem'>x</span>؟ <span class='chem'>[Cu=63.5, S=32, O=16, Ba=137]</span>",
+            placeholder: "اكتب النسبة المئوية لماء التبلر وقيمة x...",
+            keywords: ["36.07", "36.67", "5", "٥"],
+            modelAnswer: `
+              <ul class="list-disc pr-5 space-y-1 text-slate-800">
+                <li>المعادلة: <span class="chem">CuSO<sub>4</sub> + BaCl<sub>2</sub> &rarr; CuCl<sub>2</sub> + BaSO<sub>4</sub>&darr;</span></li>
+                <li>الكتلة المولية لـ <span class="chem">BaSO<sub>4</sub> = 233 g/mol</span>، ولـ <span class="chem">CuSO<sub>4</sub> = 159.5 g/mol</span></li>
+                <li>كتلة <span class="chem">CuSO<sub>4</sub></span> الجاف = <span class="chem">(5.825 &times; 159.5) / 233 = 3.9875 g</span></li>
+                <li>كتلة ماء التبلر = <span class="chem">6.2375 - 3.9875 = 2.25 g</span></li>
+                <li>النسبة المئوية لماء التبلر = <span class="chem">(2.25 / 6.2375) &times; 100 = <strong>36.07%</strong></span></li>
+                <li>عدد مولات ماء التبلر: <span class="chem">x = (2.25 / 18) / (3.9875 / 159.5) = 0.125 / 0.025 = <strong>5</strong></span></li>
+              </ul>
+            `
+          },
+          {
+            q: "تفاعل <span class='chem'>0.5 mol</span> من كربونات الصوديوم مع وفرة من حمض الهيدروكلوريك وعند إضافة وفرة من نترات الفضة إلى محلول الملح الناتج تكون راسب أبيض، احسب كتلة الراسب؟ <span class='chem'>[Ag=108, Cl=35.5]</span>",
+            placeholder: "اكتب المعادلات وكتلة الراسب الأبيض المتكون...",
+            keywords: ["143.5", "١٤٣.٥"],
+            modelAnswer: `
+              <ul class="list-disc pr-5 space-y-1 text-slate-800">
+                <li><span class="chem">Na<sub>2</sub>CO<sub>3</sub> + 2HCl &rarr; 2NaCl + H<sub>2</sub>O + CO<sub>2</sub></span></li>
+                <li><span class="chem">2NaCl + 2AgNO<sub>3</sub> &rarr; 2NaNO<sub>3</sub> + 2AgCl&darr;</span></li>
+                <li>كل <span class="chem">1 mol</span> من <span class="chem">Na<sub>2</sub>CO<sub>3</sub></span> ينتج <span class="chem">2 mol</span> من <span class="chem">AgCl</span> &larr; إذن <span class="chem">0.5 mol</span> ينتج <span class="chem">1 mol</span> من <span class="chem">AgCl</span></li>
+                <li>الكتلة المولية لـ <span class="chem">AgCl = 108 + 35.5 = 143.5 g/mol</span></li>
+                <li>كتلة الراسب الأبيض (<span class="chem">AgCl</span>) = <span class="chem">1 &times; 143.5 = <strong>143.5 g</strong></span></li>
+              </ul>
+            `
+          },
+          {
+            q: "ادرس التفاعلين التاليين ثم أجب:<br>• <span class='chem'>CuSO<sub>4</sub> + H<sub>2</sub>S</span> (في وجود <span class='chem'>HCl</span>) &rarr; راسب (<span class='chem'>X</span>)<br>• <span class='chem'>CuSO<sub>4</sub> + BaCl<sub>2</sub></span> &rarr; راسب (<span class='chem'>Y</span>)<br>اكتب الصيغة الكيميائية للراسبين (<span class='chem'>X</span>) و (<span class='chem'>Y</span>) وحدد لون كل منهما.",
+            placeholder: "اكتب صيغة ولون الراسب X، وصيغة ولون الراسب Y...",
+            keywords: ["CuS", "BaSO4"],
+            modelAnswer: `
+              <ul class="list-disc pr-5 space-y-1 text-slate-800">
+                <li><strong>الراسب (<span class="chem">X</span>):</strong> كبريتيد النحاس <span class="chem">II</span>، صيغته الكيميائية <span class="chem"><strong>CuS</strong></span>، ولونه <strong>أسود</strong>.</li>
+                <li><strong>الراسب (<span class="chem">Y</span>):</strong> كبريتات الباريوم، صيغته الكيميائية <span class="chem"><strong>BaSO<sub>4</sub></strong></span>، ولونه <strong>أبيض</strong>.</li>
+              </ul>
+            `
+          }
+        ]
+      },
+      2: {
+        title: "النموذج الثاني (2)",
+        subtitle: "الامتحان الشامل - الباب الثاني (التحليل الكيميائي)",
+        durationMinutes: 80,
+        mcqs: [
+          {
+            q: "أي مما يلي لا يميز بين الكاشف الرئيسي لكاتيونات كل من المجموعة التحليلية الأولى والمجموعة التحليلية الثالثة؟",
+            options: [
+              "محلول كلوريد حديد <span class='chem'>II</span>",
+              "محلول كبريتات الألومنيوم",
+              "محلول كبريتات الحديد <span class='chem'>III</span>",
+              "محلول كلوريد صوديوم"
+            ],
+            correct: 3
+          },
+          {
+            q: "عند إضافة حمض الهيدروكلوريك المخفف إلى ثلاثة أملاح صلبة (<span class='chem'>A, B, C</span>) كل على حدة:<br>• في حالة (<span class='chem'>A</span>) تصاعد غاز عديم اللون.<br>• في حالة (<span class='chem'>B</span>) تصاعد غاز يتأكسد بالهواء.<br>• في حالة (<span class='chem'>C</span>) لم يحدث تفاعل.<br>أي مما يلي يعبر عن أنيونات هذه الأملاح؟",
+            options: [
+              "<span class='chem'>(A): NO<sub>2</sub><sup>-</sup>, (B): S<sub>2</sub>O<sub>3</sub><sup>2-</sup>, (C): SO<sub>3</sub><sup>2-</sup></span>",
+              "<span class='chem'>(A): CO<sub>3</sub><sup>2-</sup>, (B): NO<sub>2</sub><sup>-</sup>, (C): PO<sub>4</sub><sup>3-</sup></span>",
+              "<span class='chem'>(A): SO<sub>4</sub><sup>2-</sup>, (B): NO<sub>2</sub><sup>-</sup>, (C): CO<sub>3</sub><sup>2-</sup></span>",
+              "<span class='chem'>(A): CO<sub>3</sub><sup>2-</sup>, (B): SO<sub>3</sub><sup>2-</sup>, (C): PO<sub>4</sub><sup>3-</sup></span>"
+            ],
+            correct: 1
+          },
+          {
+            q: "أضيف حمض نيتريك مخفف إلى الملح الصلب (<span class='chem'>X</span>) فتصاعد غاز يتأكسد في الهواء، وعند إضافة محلول كبريتات الصوديوم إلى محلول الملح (<span class='chem'>X</span>) تكون راسب أبيض، أي الاختيارات التالية يعبر عن الصيغة الكيميائية للملح (<span class='chem'>X</span>)؟",
+            options: [
+              "<span class='chem'>Cu(NO<sub>2</sub>)<sub>2</sub></span>",
+              "<span class='chem'>Ca(NO<sub>2</sub>)<sub>2</sub></span>",
+              "<span class='chem'>Pb(HCO<sub>3</sub>)<sub>2</sub></span>",
+              "<span class='chem'>Fe<sub>2</sub>(SO<sub>3</sub>)<sub>3</sub></span>"
+            ],
+            correct: 1
+          },
+          {
+            q: "أي مما يلي يمكن استخدامه للكشف عن شقي ملح كلوريد الكالسيوم في محلوله؟",
+            options: [
+              "نترات الفضة - كبريتات الصوديوم",
+              "كبريتات الباريوم - هيدروكسيد الأمونيوم",
+              "نترات الفضة - بيكربونات الصوديوم",
+              "كبريتات الرصاص <span class='chem'>II</span> - نترات الصوديوم"
+            ],
+            correct: 0
+          },
+          {
+            q: "أي مما يلي يستخدم للتمييز بين محلولي <span class='chem'>CaCl<sub>2</sub></span> و <span class='chem'>Ca(NO<sub>3</sub>)<sub>2</sub></span>؟",
+            options: [
+              "<span class='chem'>HCl</span> مخفف",
+              "<span class='chem'>Na<sub>2</sub>CO<sub>3(aq)</sub></span>",
+              "<span class='chem'>H<sub>2</sub>SO<sub>4</sub></span> مخفف",
+              "<span class='chem'>(CH<sub>3</sub>COO)<sub>2</sub>Pb<sub>(aq)</sub></span>"
+            ],
+            correct: 3
+          },
+          {
+            q: "محلول يحتوي خليط من أنيونات كل من الكربونات والكلوريد والهيدروكسيد: أي الاختيارات التالية يعبر عن الترتيب الصحيح لفصل هذه الأنيونات باستخدام محلولين أحدهما يحتوي (<span class='chem'>Fe<sup>2+</sup></span>) والآخر يحتوي (<span class='chem'>Ca<sup>2+</sup></span>)؟",
+            options: [
+              "محلول (<span class='chem'>Fe<sup>2+</sup></span>) لفصل أنيون الكلوريد ثم محلول (<span class='chem'>Ca<sup>2+</sup></span>) لفصل أنيون الكربونات",
+              "محلول (<span class='chem'>Ca<sup>2+</sup></span>) لفصل أنيون الهيدروكسيد ثم محلول (<span class='chem'>Fe<sup>2+</sup></span>) لفصل أنيون الكلوريد",
+              "محلول (<span class='chem'>Fe<sup>2+</sup></span>) لفصل أنيون الكربونات ثم محلول (<span class='chem'>Ca<sup>2+</sup></span>) لفصل أنيون الكلوريد",
+              "محلول (<span class='chem'>Ca<sup>2+</sup></span>) لفصل أنيون الكربونات ثم محلول (<span class='chem'>Fe<sup>2+</sup></span>) لفصل أنيون الهيدروكسيد"
+            ],
+            correct: 3
+          },
+          {
+            q: "بإضافة حمض الهيدروكلوريك المخفف إلى ثلاثة أملاح صلبة (<span class='chem'>A, B, C</span>) كل على حدة:<br>• في حالة الملح (<span class='chem'>A</span>) تصاعد غاز يسهل تأكسده في الهواء.<br>• في حالة الملح (<span class='chem'>B</span>) تصاعد غاز وتكون راسب.<br>• في حالة الملح (<span class='chem'>C</span>) لم يحدث تفاعل.<br>فإن أنيونات الأملاح (<span class='chem'>A, B, C</span>) تكون:",
+            options: [
+              "<span class='chem'>(A): NO<sub>2</sub><sup>-</sup>, (B): S<sub>2</sub>O<sub>3</sub><sup>2-</sup>, (C): SO<sub>4</sub><sup>2-</sup></span>",
+              "<span class='chem'>(A): CO<sub>3</sub><sup>2-</sup>, (B): S<sub>2</sub>O<sub>3</sub><sup>2-</sup>, (C): SO<sub>4</sub><sup>2-</sup></span>",
+              "<span class='chem'>(A): NO<sub>3</sub><sup>-</sup>, (B): S<sup>2-</sup>, (C): PO<sub>4</sub><sup>3-</sup></span>",
+              "<span class='chem'>(A): CO<sub>3</sub><sup>2-</sup>, (B): NO<sub>3</sub><sup>-</sup>, (C): PO<sub>4</sub><sup>3-</sup></span>"
+            ],
+            correct: 0
+          },
+          {
+            q: "أي أزواج الكاتيونات التالية يمكن فصلها من محاليلها باستخدام محلول كلوريد الصوديوم؟",
+            options: [
+              "<span class='chem'>Ca<sup>2+</sup> / Cu<sup>2+</sup></span>",
+              "<span class='chem'>Hg<sup>+</sup> / Pb<sup>2+</sup></span>",
+              "<span class='chem'>Mg<sup>2+</sup> / Ca<sup>2+</sup></span>",
+              "<span class='chem'>Cu<sup>2+</sup> / Pb<sup>2+</sup></span>"
+            ],
+            correct: 3
+          },
+          {
+            q: "(<span class='chem'>X</span>)، (<span class='chem'>Y</span>) حمضان، الحمض (<span class='chem'>X</span>) يمكن استخدامه في الكشف عن أنيون الحمض (<span class='chem'>Y</span>) في أملاحه. فإن أنيونات الأحماض (<span class='chem'>X</span>)، (<span class='chem'>Y</span>) هما:",
+            options: [
+              "أنيون الحمض (<span class='chem'>X</span>) كلوريد، أنيون الحمض (<span class='chem'>Y</span>) نيتريت",
+              "أنيون الحمض (<span class='chem'>X</span>) كلوريد، أنيون الحمض (<span class='chem'>Y</span>) كبريتات",
+              "أنيون الحمض (<span class='chem'>X</span>) نيتريت، أنيون الحمض (<span class='chem'>Y</span>) نيترات",
+              "أنيون الحمض (<span class='chem'>X</span>) نيترات، أنيون الحمض (<span class='chem'>Y</span>) كبريتات"
+            ],
+            correct: 0
+          },
+          {
+            q: "الكاشف الذي يمكن استخدامه في التمييز بين غاز <span class='chem'>HBr</span> وغاز <span class='chem'>HCl</span> هو:",
+            options: [
+              "حمض الكبريتيك المركز الساخن",
+              "حمض الهيدروكلوريك المخفف",
+              "ورقة مبللة بالنشا",
+              "ورقة عباد شمس مبللة"
+            ],
+            correct: 0
+          },
+          {
+            q: "عند إضافة محلول (<span class='chem'>X</span>) إلى محلول يحتوي على الأنيون (<span class='chem'>Y</span>) ينتج راسب أسود، وعند إضافة المحلول (<span class='chem'>X</span>) إلى محلول يحتوي على الأنيون (<span class='chem'>Z</span>) يتكون راسب أبيض يسود بالتسخين، فإن المحلول (<span class='chem'>X</span>) والأنيونات (<span class='chem'>Y</span>)، (<span class='chem'>Z</span>) هم:",
+            options: [
+              "<span class='chem'>X: I<sub>2</sub>, Y: I<sup>-</sup>, Z: SO<sub>3</sub><sup>2-</sup></span>",
+              "<span class='chem'>X: AgNO<sub>3</sub>, Y: S<sup>2-</sup>, Z: SO<sub>3</sub><sup>2-</sup></span>",
+              "<span class='chem'>X: AgNO<sub>3</sub>, Y: SO<sub>3</sub><sup>2-</sup>, Z: S<sup>2-</sup></span>",
+              "<span class='chem'>X: KMnO<sub>4</sub>, Y: NO<sub>3</sub><sup>-</sup>, Z: SO<sub>4</sub><sup>2-</sup></span>"
+            ],
+            correct: 1
+          },
+          {
+            q: "أي الأملاح التالية يعطي غازًا واحدًا عند إضافة حمض الكبريتيك المركز الساخن إليه في حالته الصلبة؟",
+            options: [
+              "<span class='chem'>NaNO<sub>3</sub></span>",
+              "<span class='chem'>NaBr</span>",
+              "<span class='chem'>NaCl</span>",
+              "<span class='chem'>NaI</span>"
+            ],
+            correct: 2
+          },
+          {
+            q: "أضيفت كمية من الماء إلى <span class='chem'>100 mL</span> من حمض كبريتيك <span class='chem'>0.4 M</span> لتخفيفه، فتعادل <span class='chem'>8 mL</span> من الحمض المخفف مع <span class='chem'>20 mL</span> من هيدروكسيد البوتاسيوم <span class='chem'>0.2 M</span>، فإن حجم الماء اللازم إضافته لتخفيف الحمض يساوي ................",
+            options: [
+              "<span class='chem'>40 mL</span>",
+              "<span class='chem'>60 mL</span>",
+              "<span class='chem'>100 mL</span>",
+              "<span class='chem'>160 mL</span>"
+            ],
+            correct: 1
+          },
+          {
+            q: "أنيون الملح الذي يتأكسد بالعوامل المؤكسدة ولا يكون راسبًا مع محلول كلوريد الماغنسيوم هو:",
+            options: ["نيترات", "بيكربونات", "كربونات", "نيتريت"],
+            correct: 3
+          },
+          {
+            q: "عند إضافة محلول نيترات الفضة إلى محلولي ملحين كل على حدة تكون راسب أصفر في كل منهما، أي مما يلي يستخدم للتمييز بين الراسبين الناتجين؟",
+            options: [
+              "محلول كلوريد باريوم",
+              "محلول هيدروكسيد الصوديوم",
+              "محلول هيدروكسيد أمونيوم",
+              "محلول كبريتات ماغنسيوم"
+            ],
+            correct: 2
+          },
+          {
+            q: "أي مما يلي يعطي غازًا ومادة شحيحة الذوبان في الماء عند إضافة حمض الكبريتيك المركز الساخن إليه؟",
+            options: [
+              "<span class='chem'>BaCl<sub>2</sub></span>",
+              "<span class='chem'>NaCl</span>",
+              "<span class='chem'>(CH<sub>3</sub>COO)<sub>2</sub>Mg</span>",
+              "<span class='chem'>Cu(NO<sub>3</sub>)<sub>2</sub></span>"
+            ],
+            correct: 0
+          },
+          {
+            q: "أضيف <span class='chem'>1 L</span> من محلول كلوريد الكالسيوم <span class='chem'>0.3 M</span> إلى <span class='chem'>1 L</span> من حمض الكبريتيك <span class='chem'>0.4 M</span>، ثم أضيف محلول هيدروكسيد الباريوم لمعادلة الزيادة من الحمض فتكون راسب، فإن عدد مولات الحمض الزائدة وكتلة الراسب المتكون تكون:<br><span class='chem'>[Ba(OH)<sub>2</sub> = 171, BaSO<sub>4</sub> = 233, H<sub>2</sub>SO<sub>4</sub> = 98]</span>",
+            options: [
+              "<span class='chem'>(0.2 mol) - (46.6 g)</span>",
+              "<span class='chem'>(0.1 mol) - (93.2 g)</span>",
+              "<span class='chem'>(0.3 mol) - (69.9 g)</span>",
+              "<span class='chem'>(0.1 mol) - (23.3 g)</span>"
+            ],
+            correct: 3
+          },
+          {
+            q: "أي من الأملاح الآتية يكون مع حمض الكبريتيك المركز خليطًا من الغازات؟",
+            options: ["كربونات بوتاسيوم", "فوسفات بوتاسيوم", "كلوريد صوديوم", "بروميد صوديوم"],
+            correct: 3
+          },
+          {
+            q: "في التفاعلات التالية لمحلول ملح مجهول:<br>• محلول الملح + <span class='chem'>H<sub>2</sub>S</span> (محلول حامضي) &rarr; راسب أسود (<span class='chem'>B</span>)<br>• محلول الملح + محلول <span class='chem'>Na<sub>2</sub>SO<sub>4</sub></span> (محلول قاعدي) &rarr; راسب أبيض (<span class='chem'>A</span>) + غاز (<span class='chem'>X</span>)<br>فإن الراسب الأبيض (<span class='chem'>A</span>) والراسب الأسود (<span class='chem'>B</span>) والغاز (<span class='chem'>X</span>) هم:",
+            options: [
+              "الراسب (<span class='chem'>A</span>): <span class='chem'>Ag<sub>2</sub>SO<sub>4</sub></span> | الراسب (<span class='chem'>B</span>): <span class='chem'>AgCl</span> | الغاز (<span class='chem'>X</span>): <span class='chem'>H<sub>2</sub>S</span>",
+              "الراسب (<span class='chem'>A</span>): <span class='chem'>BaSO<sub>4</sub></span> | الراسب (<span class='chem'>B</span>): <span class='chem'>BaCl<sub>2</sub></span> | الغاز (<span class='chem'>X</span>): <span class='chem'>HCl</span>",
+              "الراسب (<span class='chem'>A</span>): <span class='chem'>PbSO<sub>4</sub></span> | الراسب (<span class='chem'>B</span>): <span class='chem'>PbS</span> | الغاز (<span class='chem'>X</span>): <span class='chem'>H<sub>2</sub>S</span>",
+              "الراسب (<span class='chem'>A</span>): <span class='chem'>CuSO<sub>4</sub></span> | الراسب (<span class='chem'>B</span>): <span class='chem'>CuS</span> | الغاز (<span class='chem'>X</span>): <span class='chem'>HCl</span>"
+            ],
+            correct: 2
+          },
+          {
+            q: "أي من المركبات التالية يستخدم للكشف عن شقي ملح نيترات الرصاص <span class='chem'>II</span>؟",
+            options: ["حمض نيتريك", "حمض هيدروكلوريك", "حمض كبريتيك", "حمض كربونيك"],
+            correct: 2
+          }
+        ],
+        essays: [
+          {
+            q: "<strong>أذكر اسم الملح وصيغته الكيميائية مع كتابة المعادلات (أ):</strong><br>عند إضافة حمض الكبريتيك المركز إلى الملح الصلب مع التسخين تتصاعد أبخرة بنية حمراء، وعند إضافة محلول هيدروكسيد الصوديوم إلى محلول الملح يتكون راسب جيلاتيني بني محمر.",
+            placeholder: "اكتب اسم الملح وصيغته الكيميائية والمعادلات...",
+            keywords: ["Fe(NO3)3", "نترات الحديد"],
+            modelAnswer: `
+              <ul class="list-disc pr-5 space-y-1 text-slate-800">
+                <li><strong>اسم الملح:</strong> نترات الحديد <span class="chem">III</span> — <strong>الصيغة الكيميائية:</strong> <span class="chem"><strong>Fe(NO<sub>3</sub>)<sub>3</sub></strong></span></li>
+                <li><span class="chem">2Fe(NO<sub>3</sub>)<sub>3</sub> + 3H<sub>2</sub>SO<sub>4</sub> &rarr; Fe<sub>2</sub>(SO<sub>4</sub>)<sub>3</sub> + 6HNO<sub>3</sub></span> (مركز / تسخين)</li>
+                <li><span class="chem">4HNO<sub>3</sub> &rarr; 2H<sub>2</sub>O + 4NO<sub>2</sub>&uarr; + O<sub>2</sub>&uarr;</span></li>
+                <li><span class="chem">Fe(NO<sub>3</sub>)<sub>3</sub> + 3NaOH &rarr; Fe(OH)<sub>3</sub>&darr; + 3NaNO<sub>3</sub></span></li>
+              </ul>
+            `
+          },
+          {
+            q: "<strong>أذكر اسم الملح وصيغته الكيميائية مع كتابة المعادلات (ب):</strong><br>ملح محلوله مع كبريتيد الهيدروجين في وسط حامضي يعطي راسب أسود، ومحلول نفس الملح مع محلول كلوريد الباريوم يعطي راسب أبيض لا يذوب في حمض الهيدروكلوريك المخفف.",
+            placeholder: "اكتب اسم الملح وصيغته الكيميائية والمعادلات...",
+            keywords: ["CuSO4", "كبريتات النحاس"],
+            modelAnswer: `
+              <ul class="list-disc pr-5 space-y-1 text-slate-800">
+                <li><strong>اسم الملح:</strong> كبريتات النحاس <span class="chem">II</span> — <strong>الصيغة الكيميائية:</strong> <span class="chem"><strong>CuSO<sub>4</sub></strong></span></li>
+                <li><span class="chem">CuSO<sub>4</sub> + H<sub>2</sub>S &rarr; CuS&darr; + H<sub>2</sub>SO<sub>4</sub></span> (في وجود <span class="chem">HCl</span>)</li>
+                <li><span class="chem">CuSO<sub>4</sub> + BaCl<sub>2</sub> &rarr; BaSO<sub>4</sub>&darr; + CuCl<sub>2</sub></span></li>
+              </ul>
+            `
+          },
+          {
+            q: "<strong>أذكر اسم الملح وصيغته الكيميائية مع كتابة المعادلات (ج):</strong><br>ملح محلوله مع كبريتيد الهيدروجين في وسط حامضي يعطي راسب أسود، ومحلول نفس الملح مع محلول كلوريد الباريوم يعطي راسب أبيض يذوب في حمض الهيدروكلوريك المخفف.",
+            placeholder: "اكتب اسم الملح وصيغته الكيميائية والمعادلات...",
+            keywords: ["Cu3(PO4)2", "فوسفات النحاس"],
+            modelAnswer: `
+              <ul class="list-disc pr-5 space-y-1 text-slate-800">
+                <li><strong>اسم الملح:</strong> فوسفات النحاس <span class="chem">II</span> — <strong>الصيغة الكيميائية:</strong> <span class="chem"><strong>Cu<sub>3</sub>(PO<sub>4</sub>)<sub>2</sub></strong></span></li>
+                <li><span class="chem">Cu<sub>3</sub>(PO<sub>4</sub>)<sub>2</sub> + 3H<sub>2</sub>S &rarr; 3CuS&darr; + 2H<sub>3</sub>PO<sub>4</sub></span></li>
+                <li><span class="chem">Cu<sub>3</sub>(PO<sub>4</sub>)<sub>2</sub> + 3BaCl<sub>2</sub> &rarr; Ba<sub>3</sub>(PO<sub>4</sub>)<sub>2</sub>&darr; + 3CuCl<sub>2</sub></span></li>
+              </ul>
+            `
+          },
+          {
+            q: "<strong>أذكر اسم الملح وصيغته الكيميائية مع كتابة المعادلات (د):</strong><br>عند إضافة محلول كلوريد الباريوم إلى محلول الملح يتكون راسب أبيض يذوب في حمض الهيدروكلوريك المخفف، وعند إضافة محلول النشادر إلى محلول الملح يتكون راسب أبيض يتحول إلى أبيض مخضر عند تعرضه للهواء.",
+            placeholder: "اكتب اسم الملح وصيغته الكيميائية والمعادلات...",
+            keywords: ["Fe3(PO4)2", "فوسفات الحديد"],
+            modelAnswer: `
+              <ul class="list-disc pr-5 space-y-1 text-slate-800">
+                <li><strong>اسم الملح:</strong> فوسفات الحديد <span class="chem">II</span> — <strong>الصيغة الكيميائية:</strong> <span class="chem"><strong>Fe<sub>3</sub>(PO<sub>4</sub>)<sub>2</sub></strong></span></li>
+                <li><span class="chem">Fe<sub>3</sub>(PO<sub>4</sub>)<sub>2</sub> + 3BaCl<sub>2</sub> &rarr; Ba<sub>3</sub>(PO<sub>4</sub>)<sub>2</sub>&darr; + 3FeCl<sub>2</sub></span></li>
+                <li><span class="chem">Fe<sub>3</sub>(PO<sub>4</sub>)<sub>2</sub> + 6NH<sub>4</sub>OH &rarr; 3Fe(OH)<sub>2</sub>&darr; + 2(NH<sub>4</sub>)<sub>3</sub>PO<sub>4</sub></span></li>
+              </ul>
+            `
+          },
+          {
+            q: "أضيف <span class='chem'>2.65 g</span> من كربونات الصوديوم إلى محلول حمض هيدروكلوريك حجمه <span class='chem'>0.5 L</span>، وبعد تمام التفاعل لزم لمعايرة الفائض من الحمض <span class='chem'>100 mL</span> من محلول هيدروكسيد صوديوم <span class='chem'>0.1 M</span>، ما تركيز الحمض قبل بداية التفاعل؟ <span class='chem'>[Na=23, C=12, O=16]</span>",
+            placeholder: "اكتب خطوات حساب تركيز الحمض الابتدائي...",
+            keywords: ["0.12", "٠.١٢"],
+            modelAnswer: `
+              <ul class="list-disc pr-5 space-y-1 text-slate-800">
+                <li>عدد مولات <span class="chem">Na<sub>2</sub>CO<sub>3</sub> = 2.65 / 106 = 0.025 mol</span></li>
+                <li>من المعادلة <span class="chem">2HCl + Na<sub>2</sub>CO<sub>3</sub> &rarr; 2NaCl + H<sub>2</sub>O + CO<sub>2</sub></span> &larr; عدد مولات <span class="chem">HCl</span> المتفاعلة = <span class="chem">0.025 &times; 2 = 0.05 mol</span></li>
+                <li>عدد مولات <span class="chem">HCl</span> الفائضة (المتعادلة مع <span class="chem">NaOH</span>) = <span class="chem">0.1 &times; 100 &times; 10<sup>-3</sup> = 0.01 mol</span></li>
+                <li>عدد مولات <span class="chem">HCl</span> الكلية = <span class="chem">0.05 + 0.01 = 0.06 mol</span></li>
+                <li>تركيز الحمض قبل بداية التفاعل = <span class="chem">0.06 / 0.5 = <strong>0.12 M</strong></span></li>
+              </ul>
+            `
+          },
+          {
+            q: "أضيف <span class='chem'>25 mL</span> من محلول كربونات الصوديوم تركيزه <span class='chem'>0.3 M</span> إلى <span class='chem'>25 mL</span> من حمض الهيدروكلوريك تركيزه <span class='chem'>0.4 M</span>، ما المادة الزائدة؟ وكم مولًا زائدًا منها؟",
+            placeholder: "حدد المادة الزائدة وعدد المولات الزائدة...",
+            keywords: ["0.0025", "كربونات الصوديوم", "Na2CO3", "القاعدة"],
+            modelAnswer: `
+              <ul class="list-disc pr-5 space-y-1 text-slate-800">
+                <li>المعادلة: <span class="chem">2HCl + Na<sub>2</sub>CO<sub>3</sub> &rarr; 2NaCl + H<sub>2</sub>O + CO<sub>2</sub></span></li>
+                <li>نسبة مولات الحمض <span class="chem">(M<sub>a</sub>V<sub>a</sub> / n<sub>a</sub>) = (0.4 &times; 25 &times; 10<sup>-3</sup>) / 2 = 0.005 mol</span></li>
+                <li>نسبة مولات القاعدة <span class="chem">(M<sub>b</sub>V<sub>b</sub> / n<sub>b</sub>) = (0.3 &times; 25 &times; 10<sup>-3</sup>) / 1 = 0.0075 mol</span></li>
+                <li><strong>المادة الزائدة هي:</strong> القاعدة (<span class="chem">Na<sub>2</sub>CO<sub>3</sub></span> كربونات الصوديوم).</li>
+                <li><strong>عدد المولات الزائدة:</strong> <span class="chem">(0.0075 - 0.005) &times; 1 = <strong>0.0025 mol</strong></span></li>
+              </ul>
+            `
+          },
+          {
+            q: "أضيف <span class='chem'>10 mL</span> من محلول حمض الفوسفوريك <span class='chem'>H<sub>3</sub>PO<sub>4</sub></span> تركيزه <span class='chem'>1 M</span> إلى <span class='chem'>20 mL</span> من محلول هيدروكسيد الصوديوم <span class='chem'>NaOH</span> تركيزه <span class='chem'>1 M</span> لتتم عملية المعايرة، ما صيغة الملح الناتج؟ وما نوع الوسط؟",
+            placeholder: "اكتب صيغة الملح الناتج ونوع الوسط (حامضي / قاعدي / متعادل)...",
+            keywords: ["Na3PO4", "حامضي"],
+            modelAnswer: `
+              <ul class="list-disc pr-5 space-y-1 text-slate-800">
+                <li>المعادلة: <span class="chem">3NaOH + H<sub>3</sub>PO<sub>4</sub> &rarr; Na<sub>3</sub>PO<sub>4</sub> + 3H<sub>2</sub>O</span></li>
+                <li><strong>صيغة الملح الناتج:</strong> <span class="chem"><strong>Na<sub>3</sub>PO<sub>4</sub></strong></span> (فوسفات الصوديوم).</li>
+                <li>نسبة الحمض = <span class="chem">(1 &times; 10) / 1 = 10</span>، ونسبة القاعدة = <span class="chem">(1 &times; 20) / 3 = 6.67</span></li>
+                <li>بما أن نسبة الحمض أكبر، فإن <strong>نوع الوسط: حامضي</strong>.</li>
+              </ul>
+            `
+          },
+          {
+            q: "تفاعل <span class='chem'>200 mL</span> من كربونات الصوديوم تركيزه <span class='chem'>0.5 M</span> مع وفرة من حمض الكبريتيك، وعند إضافة وفرة من نترات الفضة إلى محلول الملح الناتج تكون راسب أبيض، احسب كتلة الراسب؟ <span class='chem'>[Na=23, S=32, O=16, C=12, Ag=108]</span>",
+            placeholder: "اكتب خطوات الحل وكتلة الراسب الأبيض بالجرام...",
+            keywords: ["31.2", "٣١.٢"],
+            modelAnswer: `
+              <ul class="list-disc pr-5 space-y-1 text-slate-800">
+                <li><span class="chem">Na<sub>2</sub>CO<sub>3</sub> + H<sub>2</sub>SO<sub>4</sub> &rarr; Na<sub>2</sub>SO<sub>4</sub> + H<sub>2</sub>O + CO<sub>2</sub></span></li>
+                <li><span class="chem">Na<sub>2</sub>SO<sub>4</sub> + 2AgNO<sub>3</sub> &rarr; 2NaNO<sub>3</sub> + Ag<sub>2</sub>SO<sub>4</sub>&darr;</span></li>
+                <li>عدد مولات <span class="chem">Na<sub>2</sub>CO<sub>3</sub> = 0.5 &times; 200 &times; 10<sup>-3</sup> = 0.1 mol</span> &larr; ينتج <span class="chem">0.1 mol</span> من <span class="chem">Ag<sub>2</sub>SO<sub>4</sub></span></li>
+                <li>الكتلة المولية لـ <span class="chem">Ag<sub>2</sub>SO<sub>4</sub> = 2(108) + 32 + 4(16) = 312 g/mol</span></li>
+                <li>كتلة الراسب الأبيض (<span class="chem">Ag<sub>2</sub>SO<sub>4</sub></span>) = <span class="chem">0.1 &times; 312 = <strong>31.2 g</strong></span></li>
+              </ul>
+            `
+          }
+        ]
+      }
+    };
+
+    // =========================================================================
+    // حالة التطبيق (State)
+    // =========================================================================
+    let currentModelId = null;
+    let studentName = "";
+    let studentGroup = "";
+    let userMcqAnswers = {};     // { questionIndex: optionIndex }
+    let userEssayAnswers = {};   // { essayIndex: textString }
+    let isSubmitted = false;
+    let timerInterval = null;
+    let remainingSeconds = 80 * 60;
+
+    const OPTION_LETTERS = ["أ", "ب", "ج", "د"];
+
+    // =========================================================================
+    // دوال التنقل وبدء الامتحان
+    // =========================================================================
+    function startExam(modelId) {
+      const nameInput = document.getElementById("studentName").value.trim();
+      const groupInput = document.getElementById("studentGroup").value.trim();
+      const errorMsg = document.getElementById("nameErrorMsg");
+
+      if (!nameInput) {
+        errorMsg.classList.remove("hidden");
+        document.getElementById("studentName").focus();
+        return;
+      }
+
+      errorMsg.classList.add("hidden");
+      studentName = nameInput;
+      studentGroup = groupInput;
+      currentModelId = modelId;
+      userMcqAnswers = {};
+      userEssayAnswers = {};
+      isSubmitted = false;
+
+      const model = EXAMS_DATA[modelId];
+      remainingSeconds = model.durationMinutes * 60;
+
+      // تحديث الواجهة
+      document.getElementById("welcomeScreen").classList.add("hidden");
+      document.getElementById("examScreen").classList.remove("hidden");
+      document.getElementById("examHeaderControls").classList.remove("hidden");
+      document.getElementById("resultSummaryCard").classList.add("hidden");
+      document.getElementById("bottomSubmitArea").classList.remove("hidden");
+      document.getElementById("headerSubmitBtn").classList.remove("hidden");
+
+      document.getElementById("activeModelBadge").textContent = model.title;
+      document.getElementById("liveStudentName").textContent = studentName;
+      document.getElementById("liveStudentGroup").textContent = studentGroup ? `(${studentGroup})` : "";
+
+      renderExamQuestions();
+      updateAnsweredCounter();
+      startTimer();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function returnToHome() {
+      stopTimer();
+      document.getElementById("examScreen").classList.add("hidden");
+      document.getElementById("examHeaderControls").classList.add("hidden");
+      document.getElementById("welcomeScreen").classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function retakeSameModel() {
+      if (currentModelId) {
+        startExam(currentModelId);
+      }
+    }
+
+    // =========================================================================
+    // المؤقت الزمني (80 دقيقة)
+    // =========================================================================
+    function startTimer() {
+      stopTimer();
+      updateTimerDisplay();
+
+      timerInterval = setInterval(() => {
+        remainingSeconds--;
+        updateTimerDisplay();
+
+        if (remainingSeconds <= 0) {
+          stopTimer();
+          submitExam(true); // تسليم تلقائي عند انتهاء الوقت
+        }
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function updateTimerDisplay() {
+      const mins = Math.floor(Math.max(0, remainingSeconds) / 60);
+      const secs = Math.max(0, remainingSeconds) % 60;
+      const formatted = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+      document.getElementById("timerDisplay").textContent = formatted;
+
+      const timerBox = document.getElementById("timerBox");
+      if (remainingSeconds <= 600 && !isSubmitted) {
+        timerBox.classList.add("timer-danger");
+      } else {
+        timerBox.classList.remove("timer-danger");
+      }
+    }
+
+    // =========================================================================
+    // بناء وعرض الأسئلة
+    // =========================================================================
+    function renderExamQuestions() {
+      const model = EXAMS_DATA[currentModelId];
+      const mcqContainer = document.getElementById("mcqContainer");
+      const essayContainer = document.getElementById("essayContainer");
+
+      mcqContainer.innerHTML = "";
+      essayContainer.innerHTML = "";
+
+      // 1. بناء أسئلة الاختيار من متعدد
+      model.mcqs.forEach((item, qIdx) => {
+        const card = document.createElement("div");
+        card.id = `mcq-card-${qIdx}`;
+        card.className = "bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 space-y-4 transition";
+
+        let optionsHtml = "";
+        item.options.forEach((optText, optIdx) => {
+          optionsHtml += `
+            <label id="mcq-opt-${qIdx}-${optIdx}" onclick="selectMcqOption(${qIdx}, ${optIdx})"
+              class="option-label flex items-center gap-3 p-3.5 rounded-xl border-2 border-slate-200 cursor-pointer select-none">
+              <span class="w-8 h-8 rounded-lg bg-slate-100 border border-slate-300 flex items-center justify-center font-black text-sm text-slate-700 shrink-0">
+                ${OPTION_LETTERS[optIdx]}
+              </span>
+              <span class="text-sm sm:text-base font-bold text-slate-800 leading-relaxed flex-grow">
+                ${optText}
+              </span>
+              <span id="mcq-status-icon-${qIdx}-${optIdx}" class="text-base font-black"></span>
+            </label>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-start gap-3">
+              <span class="w-8 h-8 rounded-xl bg-blue-900 text-white font-black text-sm flex items-center justify-center shrink-0 mt-0.5">
+                ${qIdx + 1}
+              </span>
+              <h4 class="text-sm sm:text-base font-extrabold text-slate-900 leading-relaxed">
+                ${item.q}
+              </h4>
+            </div>
+            <span id="mcq-badge-${qIdx}" class="shrink-0 text-xs font-extrabold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg">
+              1 درجة
+            </span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
+            ${optionsHtml}
+          </div>
+        `;
+        mcqContainer.appendChild(card);
+      });
+
+      // 2. بناء الأسئلة المقالية
+      model.essays.forEach((item, eIdx) => {
+        const card = document.createElement("div");
+        card.id = `essay-card-${eIdx}`;
+        card.className = "bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 space-y-4";
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-start gap-3">
+              <span class="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 font-black text-sm flex items-center justify-center shrink-0 mt-0.5">
+                ${eIdx + 1}
+              </span>
+              <div class="text-sm sm:text-base font-extrabold text-slate-900 leading-relaxed">
+                ${item.q}
+              </div>
+            </div>
+            <span id="essay-badge-${eIdx}" class="shrink-0 text-xs font-extrabold bg-amber-100 text-amber-900 px-2.5 py-1 rounded-lg">
+              3 درجات
+            </span>
+          </div>
+
+          <div>
+            <label for="essay-input-${eIdx}" class="block text-xs font-bold text-slate-500 mb-1.5">إجابة الطالب:</label>
+            <textarea id="essay-input-${eIdx}" rows="3" oninput="handleEssayInput(${eIdx}, this.value)"
+              placeholder="${item.placeholder}"
+              class="w-full rounded-xl border-2 border-slate-200 focus:border-blue-600 focus:outline-none p-3.5 text-sm font-bold text-slate-800 bg-slate-50 focus:bg-white transition"></textarea>
+          </div>
+
+          <!-- صندوق الإجابة النموذجية (مخفي حتى التسليم) -->
+          <div id="essay-model-box-${eIdx}" class="hidden rounded-2xl bg-emerald-50 border-2 border-emerald-300 p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs sm:text-sm font-black text-emerald-900 flex items-center gap-1.5">
+                <span>✅</span>
+                <span>الإجابة النموذجية المعتمدة (3 درجات):</span>
+              </span>
+              <span id="essay-earned-pill-${eIdx}" class="text-xs font-black px-2.5 py-0.5 rounded-full"></span>
+            </div>
+            <div class="text-xs sm:text-sm leading-relaxed pt-1">
+              ${item.modelAnswer}
+            </div>
+          </div>
+        `;
+        essayContainer.appendChild(card);
+      });
+    }
+
+    // =========================================================================
+    // تفاعل الطالب مع الأسئلة (مقفل تماماً بعد التسليم)
+    // =========================================================================
+    function selectMcqOption(qIdx, optIdx) {
+      if (isSubmitted) return; // ممنوع التعديل بعد التسليم
+
+      userMcqAnswers[qIdx] = optIdx;
+      const model = EXAMS_DATA[currentModelId];
+
+      model.mcqs[qIdx].options.forEach((_, idx) => {
+        const el = document.getElementById(`mcq-opt-${qIdx}-${idx}`);
+        if (idx === optIdx) {
+          el.classList.add("option-selected");
+        } else {
+          el.classList.remove("option-selected");
+        }
+      });
+
+      updateAnsweredCounter();
+    }
+
+    function handleEssayInput(eIdx, val) {
+      if (isSubmitted) return; // ممنوع التعديل بعد التسليم
+      userEssayAnswers[eIdx] = val;
+      updateAnsweredCounter();
+    }
+
+    function updateAnsweredCounter() {
+      const model = EXAMS_DATA[currentModelId];
+      const mcqCount = Object.keys(userMcqAnswers).length;
+      const essayCount = Object.values(userEssayAnswers).filter(v => v && v.trim().length > 0).length;
+      const totalQuestions = model.mcqs.length + model.essays.length;
+      document.getElementById("answeredCounter").textContent = `${mcqCount + essayCount} من ${totalQuestions}`;
+    }
+
+    // =========================================================================
+    // تأكيد التسليم والتصحيح النهائي
+    // =========================================================================
+    function confirmSubmitModal() {
+      if (isSubmitted) return;
+      const model = EXAMS_DATA[currentModelId];
+      const mcqCount = Object.keys(userMcqAnswers).length;
+      const essayCount = Object.values(userEssayAnswers).filter(v => v && v.trim().length > 0).length;
+      const totalQuestions = model.mcqs.length + model.essays.length;
+      const unanswered = totalQuestions - (mcqCount + essayCount);
+
+      const warningEl = document.getElementById("modalUnansweredWarning");
+      if (unanswered > 0) {
+        warningEl.innerHTML = `تنبيه: يتبقى لديك <strong class="text-red-600">${unanswered} سؤال</strong> بدون إجابة.<br>بعد تسليم الامتحان سيتم تصحيحه فوراً ولن يُسمح بتعديل الإجابات.`;
+      } else {
+        warningEl.textContent = "لقد أجبت على جميع الأسئلة! بعد تسليم الامتحان سيتم تصحيحه فوراً ولن يُسمح بتعديل الإجابات.";
+      }
+
+      document.getElementById("confirmModal").classList.remove("hidden");
+    }
+
+    function closeConfirmModal() {
+      document.getElementById("confirmModal").classList.add("hidden");
+    }
+
+    function normalizeText(str) {
+      return (str || "")
+        .toLowerCase()
+        .replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d))
+        .replace(/\s+/g, "")
+        .replace(/أ|إ|آ/g, "ا")
+        .replace(/ة/g, "ه");
+    }
+
+    function submitExam(isAutoTimeout) {
+      if (isSubmitted) return;
+      isSubmitted = true;
+      closeConfirmModal();
+      stopTimer();
+
+      const model = EXAMS_DATA[currentModelId];
+      let mcqScore = 0;
+      let essayScore = 0;
+
+      // 1. تصحيح أسئلة الاختيار من متعدد (1 درجة لكل سؤال) + قفل التعديل
+      model.mcqs.forEach((item, qIdx) => {
+        const chosen = userMcqAnswers[qIdx];
+        const correct = item.correct;
+        const card = document.getElementById(`mcq-card-${qIdx}`);
+        const badge = document.getElementById(`mcq-badge-${qIdx}`);
+
+        item.options.forEach((_, optIdx) => {
+          const optEl = document.getElementById(`mcq-opt-${qIdx}-${optIdx}`);
+          const iconEl = document.getElementById(`mcq-status-icon-${qIdx}-${optIdx}`);
+          optEl.classList.add("locked", "cursor-default");
+          optEl.classList.remove("option-selected");
+
+          if (optIdx === correct) {
+            optEl.classList.add("option-correct");
+            iconEl.textContent = "✔️";
+          } else if (chosen === optIdx && chosen !== correct) {
+            optEl.classList.add("option-wrong");
+            iconEl.textContent = "❌";
+          }
+        });
+
+        if (chosen === correct) {
+          mcqScore += 1;
+          card.classList.add("border-emerald-400");
+          badge.className = "shrink-0 text-xs font-black bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-lg";
+          badge.textContent = "1 / 1 درجة ✔️";
+        } else {
+          card.classList.add("border-red-300");
+          badge.className = "shrink-0 text-xs font-black bg-red-100 text-red-800 px-2.5 py-1 rounded-lg";
+          badge.textContent = chosen === undefined ? "0 / 1 (متروك)" : "0 / 1 درجة ❌";
+        }
+      });
+
+      // 2. تصحيح الأسئلة المقالية (3 درجات لكل سؤال) + قفل التعديل + عرض الحل النموذجي
+      model.essays.forEach((item, eIdx) => {
+        const textarea = document.getElementById(`essay-input-${eIdx}`);
+        textarea.readOnly = true;
+        textarea.disabled = true;
+        textarea.classList.add("bg-slate-100", "cursor-not-allowed", "text-slate-700");
+
+        const rawAns = userEssayAnswers[eIdx] || "";
+        const normAns = normalizeText(rawAns);
+
+        let earned = 0;
+        if (normAns.length > 0) {
+          const matched = item.keywords.some(kw => normAns.includes(normalizeText(kw)));
+          if (matched) {
+            earned = 3;
+          } else if (normAns.length >= 8) {
+            // إذا كتب الطالب خطوات محاولة جادة دون الوصول للرقم النهائي الدقيق
+            earned = 1;
+          }
+        }
+
+        essayScore += earned;
+
+        const badge = document.getElementById(`essay-badge-${eIdx}`);
+        const modelBox = document.getElementById(`essay-model-box-${eIdx}`);
+        const earnedPill = document.getElementById(`essay-earned-pill-${eIdx}`);
+
+        badge.textContent = `${earned} / 3 درجات`;
+        badge.className = earned === 3
+          ? "shrink-0 text-xs font-black bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-lg"
+          : "shrink-0 text-xs font-black bg-amber-100 text-amber-900 px-2.5 py-1 rounded-lg";
+
+        earnedPill.textContent = `درجتك في هذه المسألة: ${earned} من 3`;
+        earnedPill.className = earned === 3
+          ? "text-xs font-black px-3 py-1 rounded-full bg-emerald-600 text-white"
+          : "text-xs font-black px-3 py-1 rounded-full bg-amber-500 text-slate-950";
+
+        modelBox.classList.remove("hidden");
+      });
+
+      // 3. حساب وعرض النتيجة الإجمالية
+      const maxMcq = model.mcqs.length * 1;
+      const maxEssay = model.essays.length * 3;
+      const totalEarned = mcqScore + essayScore;
+      const totalMax = maxMcq + maxEssay;
+      const pct = Math.round((totalEarned / totalMax) * 100);
+
+      let gradeLabel = "يحتاج مراجعة مركزة 📖";
+      if (pct >= 90) gradeLabel = "امتياز مع مرتبة الشرف 🏆";
+      else if (pct >= 80) gradeLabel = "جيد جداً مرتفع 🌟";
+      else if (pct >= 65) gradeLabel = "جيد 👍";
+      else if (pct >= 50) gradeLabel = "مقبول ⚡";
+
+      document.getElementById("resultStudentTitle").textContent = `الطالب: ${studentName} ${studentGroup ? `— (${studentGroup})` : ""}`;
+      document.getElementById("resultModelSubtitle").textContent = `${model.title} • ${isAutoTimeout ? "تم التسليم تلقائياً لانتهاء الوقت (80 دقيقة)" : "تم التسليم بنجاح"}`;
+      document.getElementById("totalScoreDisplay").textContent = `${totalEarned} / ${totalMax}`;
+      document.getElementById("percentageDisplay").textContent = `${pct}%`;
+      document.getElementById("mcqScoreBadge").textContent = `${mcqScore} / ${maxMcq}`;
+      document.getElementById("essayScoreBadge").textContent = `${essayScore} / ${maxEssay}`;
+      document.getElementById("gradeTextBadge").textContent = gradeLabel;
+
+      document.getElementById("resultSummaryCard").classList.remove("hidden");
+      document.getElementById("bottomSubmitArea").classList.add("hidden");
+      document.getElementById("headerSubmitBtn").classList.add("hidden");
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  </script>
+</body>
+</html>
